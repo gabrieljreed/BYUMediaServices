@@ -4,7 +4,6 @@ import os
 import getpass
 import tempfile
 
-
 # Generate temp file
 def generateTempFile(jobName, cameraName):
     print("Generating temp file for ", cmds.file(q=True, sn=True, shn=True))
@@ -71,8 +70,6 @@ def executeBackburner(cameraName):
     jobName = filePath[slashIndex + 1:].split(".")[0]
     if jobName.count("_") is not 1:
         jobName = jobName[:jobName.rfind("_")]
-        print("truncating")
-    print("JOBNAME: ", jobName)
     finalFileName = "{jobName}_{cameraName}.mb".format(jobName=jobName, cameraName=cameraName)
     finalSavePath = (os.path.join(savePath, finalFileName)).replace("\\", "/")
     print("Saving file: ", finalSavePath)
@@ -91,8 +88,9 @@ def executeBackburner(cameraName):
     jobFolder = filePath[slashIndex + 1:].split(".")[0]
     finalRenderPath = (os.path.join(projectPath, renderPath, jobName, cameraName)).replace("\\", "/")
     print("Rendering to : ", finalRenderPath)
-    final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 1 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 1 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{projectName}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, projectName = filePath, writeDirectory = finalRenderPath)
+    final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 1 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 1 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{projectName}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, projectName = finalSavePath, writeDirectory = finalRenderPath)
     print("Sending to Backburner")
+    print(final)
     printSend = mm.eval('system (' + final + ')')
     print printSend
 
@@ -138,8 +136,10 @@ cmds.setAttr('defaultResolution.height',1080)
 cmds.setAttr('defaultResolution.deviceAspectRatio',1.777)
 
 executeBackburner("FrontCam")
-executeBackburner("MouthBag")
 executeBackburner("SideCam")
-executeBackburner("dummyCam")
+
+cmds.setAttr('Evelyn_FrenchSpeak_Master:DomeLightShape.camera', 0)
+cmds.setAttr('Evelyn_FrenchSpeak_Master:DomeLight.visibility', 0)
+executeBackburner("MouthBag")
 
 print("Finished")
