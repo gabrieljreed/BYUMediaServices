@@ -30,11 +30,14 @@ def generateTempFile(jobName, cameraName):
         lastTaskFrame += taskSize
     taskListFile.close()
     return tempFileName
+
+
 # Execute Backburner job
 def executeBackburner(cameraName):
     if cameraName is "frontCam":
         cmds.showHidden('Evelyn_Full')
         cmds.hide('Mouthbag_Full')
+
         # Set front camera as render cam
         cmds.setAttr('perspShape.renderable', 0)
         cmds.setAttr('Evelyn_FrenchSpeak_Master:Side_Camera.renderable', 0)
@@ -43,6 +46,7 @@ def executeBackburner(cameraName):
             elif cameraName is "sideCam":
         cmds.showHidden('Evelyn_Full')
         cmds.hide('Mouthbag_Full')
+
         # Set side camera as render cam
         cmds.setAttr('perspShape.renderable', 0)
         cmds.setAttr('Evelyn_FrenchSpeak_Master:Side_Camera.renderable', 1)
@@ -51,12 +55,14 @@ def executeBackburner(cameraName):
     else:
         cmds.hide('Evelyn_Full')
         cmds.showHidden('Mouthbag_Full')
+
         # Set side camera as render cam
         cmds.setAttr('perspShape.renderable', 0)
         cmds.setAttr('Evelyn_FrenchSpeak_Master:Side_Camera.renderable', 0)
         cmds.setAttr('Evelyn_FrenchSpeak_Master:Front_Camera.renderable', 0)
         cmds.setAttr('Evelyn_FrenchSpeak_Master:Mouthbag_Camera.renderable', 1)
-            # Save As a new file
+
+    # Save As a new file
     filePath = cmds.file(q=True, sn=True)
     slashIndex = filePath.rfind("/")
     savePath = filePath[:slashIndex]
@@ -67,8 +73,10 @@ def executeBackburner(cameraName):
     print("Saving file: ", finalSavePath)
     cmds.file(rename=finalSavePath)
     cmds.file(save=True, type="mayaBinary", f=True)
+
     # Generate temp
     generateTempFile(jobName, cameraName)
+
     # Generate and execute new Backburner command
     projectPath = "V:/Animation/2021/BYU Online/French IPA/Projects/French_IPA_Project/Renders/MayaRenders"
     renderPath = filePath.split("Scenes/")[1]
@@ -79,12 +87,18 @@ def executeBackburner(cameraName):
     print("Sending to Backburner")
     printSend = mm.eval('system (' + final + ')')
     print printSend
+
+
 # Duplicate Side Camera and name it "Mouthbag_Camera"
 def duplicateCam(CameraName):
     cmds.select(CameraName, r=True)
     cmds.duplicate(rr=True, n= 'Evelyn_FrenchSpeak_Master:Mouthbag_Camera')
+
+
 #Duplicate Camera
 duplicateCam('Evelyn_FrenchSpeak_Master:Side_Camera')
+
+
 # MARK: SETS GENERAL RENDER SETTINGS
 render_default = 'defaultRenderGlobals'
 render_arnold = 'defaultArnoldDriver'
@@ -93,23 +107,28 @@ list_Attr = cmds.listAttr(render_glob, r = False, s = True)
 for attr in list_Attr:
     get_attr_name = "%s.%s"%(render_glob, attr)
     print "stAttr %s %s"%(get_attr_name, cmds.getAttr(get_attr_name))
+
 #Set file output to tif
 cmds.setAttr("defaultArnoldDriver.ai_translator", "tif", type="string")
 cmds.setAttr('defaultArnoldDriver.tiffCompression', 0)
 cmds.setAttr('defaultArnoldDriver.tiffFormat', 2)
+
 #Setting the namespace to name_#.ext
 cmds.setAttr ('defaultRenderGlobals.outFormatControl', 0)
 cmds.setAttr ('defaultRenderGlobals.animation', 1)
 cmds.setAttr ('defaultRenderGlobals.putFrameBeforeExt', 1)
 cmds.setAttr ('defaultRenderGlobals.periodInExt', 2)
 cmds.setAttr ('defaultRenderGlobals.extensionPadding', 3)
+
 #Set end frame for rendering
 anim_end_frame = cmds.playbackOptions(maxTime =True, q=True)
 cmds.setAttr('defaultRenderGlobals.endFrame', anim_end_frame)
+
 #Change image size
 cmds.setAttr('defaultResolution.width',1920)
 cmds.setAttr('defaultResolution.height',1080)
 cmds.setAttr('defaultResolution.deviceAspectRatio',1.777)
+
 executeBackburner("frontCam")
 executeBackburner("mouthbag")
 executeBackburner("sideCam")
