@@ -3,6 +3,8 @@ import maya.mel as mm
 import os
 import getpass
 import tempfile
+
+
 # Generate temp file
 def generateTempFile(jobName, cameraName):
     print("Generating temp file for ", cmds.file(q=True, sn=True, shn=True))
@@ -34,7 +36,7 @@ def generateTempFile(jobName, cameraName):
 
 # Execute Backburner job
 def executeBackburner(cameraName):
-    if cameraName is "frontCam":
+    if cameraName is "FrontCam":
         cmds.showHidden('Evelyn_Full')
         cmds.hide('Mouthbag_Full')
 
@@ -43,7 +45,7 @@ def executeBackburner(cameraName):
         cmds.setAttr('Evelyn_FrenchSpeak_Master:Side_Camera.renderable', 0)
         cmds.setAttr('Evelyn_FrenchSpeak_Master:Front_Camera.renderable', 1)
         cmds.setAttr('Evelyn_FrenchSpeak_Master:Mouthbag_Camera.renderable', 0)
-            elif cameraName is "sideCam":
+    elif cameraName is "SideCam":
         cmds.showHidden('Evelyn_Full')
         cmds.hide('Mouthbag_Full')
 
@@ -67,7 +69,10 @@ def executeBackburner(cameraName):
     slashIndex = filePath.rfind("/")
     savePath = filePath[:slashIndex]
     jobName = filePath[slashIndex + 1:].split(".")[0]
-    jobName = jobName[:jobName.rfind("_")]
+    if jobName.count("_") is not 1:
+        jobName = jobName[:jobName.rfind("_")]
+        print("truncating")
+    print("JOBNAME: ", jobName)
     finalFileName = "{jobName}_{cameraName}.mb".format(jobName=jobName, cameraName=cameraName)
     finalSavePath = (os.path.join(savePath, finalFileName)).replace("\\", "/")
     print("Saving file: ", finalSavePath)
@@ -78,12 +83,15 @@ def executeBackburner(cameraName):
     generateTempFile(jobName, cameraName)
 
     # Generate and execute new Backburner command
-    projectPath = "V:/Animation/2021/BYU Online/French IPA/Projects/French_IPA_Project/Renders/MayaRenders"
+    projectPath = r"V:/Animation/2021/BYU Online/French IPA/Projects/French_IPA_Project/Renders/MayaRenders"
     renderPath = filePath.split("Scenes/")[1]
     slashIndex = renderPath.rfind("/")
     renderPath = renderPath[:slashIndex]
-    finalRenderPath = (os.path.join(projectPath, renderPath, jobName)).replace("\\", "/")
-    final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 50 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 1 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{projectName}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, projectName = filePath, writeDirectory = finalRenderPath)
+    slashIndex = filePath.rfind("/")
+    jobFolder = filePath[slashIndex + 1:].split(".")[0]
+    finalRenderPath = (os.path.join(projectPath, renderPath, jobName, cameraName)).replace("\\", "/")
+    print("Rendering to : ", finalRenderPath)
+    final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 1 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 1 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{projectName}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, projectName = filePath, writeDirectory = finalRenderPath)
     print("Sending to Backburner")
     printSend = mm.eval('system (' + final + ')')
     print printSend
@@ -129,7 +137,9 @@ cmds.setAttr('defaultResolution.width',1920)
 cmds.setAttr('defaultResolution.height',1080)
 cmds.setAttr('defaultResolution.deviceAspectRatio',1.777)
 
-executeBackburner("frontCam")
-executeBackburner("mouthbag")
-executeBackburner("sideCam")
+executeBackburner("FrontCam")
+executeBackburner("MouthBag")
+executeBackburner("SideCam")
 executeBackburner("dummyCam")
+
+print("Finished")
