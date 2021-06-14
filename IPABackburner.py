@@ -34,7 +34,7 @@ def generateTempFile(jobName, cameraName):
 
 
 # Execute Backburner job
-def executeBackburner(cameraName):
+def executeBackburner(cameraName, savePath):
     if cameraName is "FrontCam":
         cmds.showHidden('Evelyn_Full')
         cmds.hide('Mouthbag_Full')
@@ -66,7 +66,7 @@ def executeBackburner(cameraName):
     # Save As a new file
     filePath = cmds.file(q=True, sn=True)
     slashIndex = filePath.rfind("/")
-    savePath = filePath[:slashIndex]
+    # savePath = filePath[:slashIndex]
     jobName = filePath[slashIndex + 1:].split(".")[0]
     if jobName.count("_") is not 1:
         jobName = jobName[:jobName.rfind("_")]
@@ -114,6 +114,20 @@ for attr in list_Attr:
     get_attr_name = "%s.%s"%(render_glob, attr)
     print "stAttr %s %s"%(get_attr_name, cmds.getAttr(get_attr_name))
 
+# Create a new folder to put all the extra Maya files into
+filePath = cmds.file(q=True, sn=True)
+slashIndex = filePath.rfind("/")
+jobName = filePath[slashIndex + 1:].split(".")[0]
+filePath = filePath[:slashIndex]
+mode = 0o777
+path = (os.path.join(filePath, jobName))
+
+if not os.path.exists(path):
+    os.mkdir(path, mode)
+    print("Created folder at ", path)
+else:
+    print("Folder already exists, skipped creating")
+
 #Set file output to tif
 cmds.setAttr("defaultArnoldDriver.ai_translator", "tif", type="string")
 cmds.setAttr('defaultArnoldDriver.tiffCompression', 0)
@@ -135,11 +149,11 @@ cmds.setAttr('defaultResolution.width',1920)
 cmds.setAttr('defaultResolution.height',1080)
 cmds.setAttr('defaultResolution.deviceAspectRatio',1.777)
 
-executeBackburner("FrontCam")
-executeBackburner("SideCam")
+executeBackburner("FrontCam", path)
+executeBackburner("SideCam", path)
 
 cmds.setAttr('Evelyn_FrenchSpeak_Master:DomeLightShape.camera', 0)
 cmds.setAttr('Evelyn_FrenchSpeak_Master:DomeLight.visibility', 0)
-executeBackburner("MouthBag")
+executeBackburner("MouthBag", path)
 
 print("Finished")
