@@ -3,6 +3,43 @@ import maya.mel as mm
 import os
 import getpass
 import tempfile
+import glob
+
+
+# Set general render settings
+def setGeneralRenderSettings():
+    #Duplicate Camera
+    duplicateCam('Carolina_GermanSpeak_Master:Carolina_Side')
+
+    render_default = 'defaultRenderGlobals'
+    render_arnold = 'defaultArnoldDriver'
+    render_glob = render_arnold
+    list_Attr = cmds.listAttr(render_glob, r = False, s = True)
+    for attr in list_Attr:
+        get_attr_name = "%s.%s"%(render_glob, attr)
+        print "stAttr %s %s"%(get_attr_name, cmds.getAttr(get_attr_name))
+
+    #Set file output to tif
+    cmds.setAttr("defaultArnoldDriver.ai_translator", "tif", type="string")
+    cmds.setAttr('defaultArnoldDriver.tiffCompression', 0)
+    cmds.setAttr('defaultArnoldDriver.tiffFormat', 2)
+
+    #Setting the namespace to name_#.ext
+    cmds.setAttr ('defaultRenderGlobals.outFormatControl', 0)
+    cmds.setAttr ('defaultRenderGlobals.animation', 1)
+    cmds.setAttr ('defaultRenderGlobals.putFrameBeforeExt', 1)
+    cmds.setAttr ('defaultRenderGlobals.periodInExt', 2)
+    cmds.setAttr ('defaultRenderGlobals.extensionPadding', 3)
+
+    #Set end frame for rendering
+    anim_end_frame = cmds.playbackOptions(maxTime =True, q=True)
+    cmds.setAttr('defaultRenderGlobals.endFrame', anim_end_frame)
+
+    #Change image size
+    cmds.setAttr('defaultResolution.width',1920)
+    cmds.setAttr('defaultResolution.height',1080)
+    cmds.setAttr('defaultResolution.deviceAspectRatio',1.777)
+
 
 # Generate temp file
 def generateTempFile(jobName, cameraName):
@@ -34,8 +71,26 @@ def generateTempFile(jobName, cameraName):
     return tempFileName
 
 
+# Make folder
+def makeFolder(filePath):
+    slashIndex = filePath.rfind("/")
+    jobName = filePath[slashIndex + 1:].split(".")[0]
+    filePath = filePath[:slashIndex]
+    mode = 0o777
+    path = (os.path.join(filePath, jobName))
+
+    if not os.path.exists(path):
+        os.mkdir(path, mode)
+        print("Created folder at {path}\n".format(path=path))
+    else:
+        print("Folder already exists, skipped creating\n")
+
+
 # Execute Backburner job
 def executeBackburner(cameraName, savePath, baseFilePath):
+    cmds.setAttr('MouthBag_Master:Annie_Linguistic:Annie_FrontView.renderable', 0)
+    cmds.setAttr('MouthBag_Master:Annie_Linguistic:Annie_Sideview.renderable', 0)
+
     if cameraName is "FrontCam":
         cmds.showHidden('Carolina_GermanSpeak_Master:Carolina_IPA:Carolina')
         cmds.hide('Mouthbag')
@@ -91,7 +146,7 @@ def executeBackburner(cameraName, savePath, baseFilePath):
     jobFolder = filePath[slashIndex + 1:].split(".")[0]
     finalRenderPath = (os.path.join(projectPath, renderPath, jobName, cameraName)).replace("\\", "/")
     print("Rendering to : {finalRenderPath}".format(finalRenderPath=finalRenderPath))
-    final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 1 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 1 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{projectName}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, projectName = finalSavePath, writeDirectory = finalRenderPath)
+    final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 50 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 1 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{projectName}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, projectName = finalSavePath, writeDirectory = finalRenderPath)
     print("\n\nSending to Backburner")
     print(final)
     printSend = mm.eval('system (' + final + ')')
@@ -104,63 +159,31 @@ def duplicateCam(CameraName):
     cmds.duplicate(rr=True, n= 'Carolina_GermanSpeak_Master:Mouthbag_Camera')
 
 
-#Duplicate Camera
-duplicateCam('Carolina_GermanSpeak_Master:Carolina_Side')
+# Main function to send all Backburner jobs for a given file
+def runner(fileName):
+    cmds.file(save=True, type="mayaBinary", f=True)
+    cmds.file(fileName, o=True)
+
+    setGeneralRenderSettings()
+
+    # Create a new folder to put all the extra Maya files into
+    filePath = cmds.file(q=True, sn=True)
+    makeFolder(filePath)
+
+    executeBackburner("FrontCam", path, filePath)
+    executeBackburner("SideCam", path, filePath)
+
+    cmds.setAttr('Carolina_GermanSpeak_Master:aiSkyDomeLight1.camera', 0)
+    cmds.setAttr('Carolina_GermanSpeak_Master:aiSkyDomeLight1.visibility', 0)
+    executeBackburner("MouthBag", path, filePath)
+
+    # Opens original file back up (for debugging purposes)
+    cmds.file(filePath, o=True)
+
+    print("Finished\n\n\n")
 
 
-# MARK: SETS GENERAL RENDER SETTINGS
-render_default = 'defaultRenderGlobals'
-render_arnold = 'defaultArnoldDriver'
-render_glob = render_arnold
-list_Attr = cmds.listAttr(render_glob, r = False, s = True)
-for attr in list_Attr:
-    get_attr_name = "%s.%s"%(render_glob, attr)
-    print "stAttr %s %s"%(get_attr_name, cmds.getAttr(get_attr_name))
-
-# Create a new folder to put all the extra Maya files into
-filePath = cmds.file(q=True, sn=True)
-baseFilePath = filePath
-slashIndex = filePath.rfind("/")
-jobName = filePath[slashIndex + 1:].split(".")[0]
-filePath = filePath[:slashIndex]
-mode = 0o777
-path = (os.path.join(filePath, jobName))
-
-if not os.path.exists(path):
-    os.mkdir(path, mode)
-    print("Created folder at {path}\n".format(path=path))
-else:
-    print("Folder already exists, skipped creating\n")
-
-#Set file output to tif
-cmds.setAttr("defaultArnoldDriver.ai_translator", "tif", type="string")
-cmds.setAttr('defaultArnoldDriver.tiffCompression', 0)
-cmds.setAttr('defaultArnoldDriver.tiffFormat', 2)
-
-#Setting the namespace to name_#.ext
-cmds.setAttr ('defaultRenderGlobals.outFormatControl', 0)
-cmds.setAttr ('defaultRenderGlobals.animation', 1)
-cmds.setAttr ('defaultRenderGlobals.putFrameBeforeExt', 1)
-cmds.setAttr ('defaultRenderGlobals.periodInExt', 2)
-cmds.setAttr ('defaultRenderGlobals.extensionPadding', 3)
-
-#Set end frame for rendering
-anim_end_frame = cmds.playbackOptions(maxTime =True, q=True)
-cmds.setAttr('defaultRenderGlobals.endFrame', anim_end_frame)
-
-#Change image size
-cmds.setAttr('defaultResolution.width',1920)
-cmds.setAttr('defaultResolution.height',1080)
-cmds.setAttr('defaultResolution.deviceAspectRatio',1.777)
-
-executeBackburner("FrontCam", path, baseFilePath)
-executeBackburner("SideCam", path, baseFilePath)
-
-cmds.setAttr('Carolina_GermanSpeak_Master:aiSkyDomeLight1.camera', 0)
-cmds.setAttr('Carolina_GermanSpeak_Master:aiSkyDomeLight1.visibility', 0)
-executeBackburner("MouthBag", path, baseFilePath)
-
-print(baseFilePath)
-cmds.file(baseFilePath, o=True)
-
-print("Finished\n\n\n")
+for name in glob.glob(r"V:\Animation\2021\BYU Online\GERMAN IPA\Projects\German Pronunciation\Maya\Scenes\01 Vowels\01 Monophthong\01 Front\**\*.mb"):
+    if not "SideCam" in name and not "FrontCam" in name and not "MouthBag" in name:
+        print(name)
+        runner(name)
