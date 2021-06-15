@@ -6,7 +6,7 @@ import tempfile
 
 # Generate temp file
 def generateTempFile(jobName, cameraName):
-    print("Generating temp file for {printFileName}".format(printFileName=cmds.file(q=True, sn=True, shn=True)))
+    print("Generating temp file for {printFileName}...".format(printFileName=cmds.file(q=True, sn=True, shn=True)))
     taskList = "{jobName}_{cameraName}".format(jobName=jobName, cameraName=cameraName)
     tempFileName = tempfile.gettempdir()
     tempFileName = tempFileName.replace("\\", '/')
@@ -30,11 +30,12 @@ def generateTempFile(jobName, cameraName):
         startTaskFrame += taskSize
         lastTaskFrame += taskSize
     taskListFile.close()
+    print("Temp file successfully generated\n\n")
     return tempFileName
 
 
 # Execute Backburner job
-def executeBackburner(cameraName, savePath):
+def executeBackburner(cameraName, savePath, baseFilePath):
     if cameraName is "FrontCam":
         cmds.showHidden('Carolina_GermanSpeak_Master:Carolina_IPA:Carolina')
         cmds.hide('Mouthbag')
@@ -42,8 +43,8 @@ def executeBackburner(cameraName, savePath):
         # Set front camera as render cam
         cmds.setAttr('perspShape.renderable', 0)
         cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Side.renderable', 0)
-        cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Front', 1)
-        cmds.setAttr('Evelyn_FrenchSpeak_Master:Mouthbag_Camera.renderable', 0)
+        cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Front.renderable', 1)
+        cmds.setAttr('Carolina_GermanSpeak_Master:Mouthbag_Camera.renderable', 0)
     elif cameraName is "SideCam":
         cmds.showHidden('Carolina_GermanSpeak_Master:Carolina_IPA:Carolina')
         cmds.hide('Mouthbag')
@@ -51,8 +52,8 @@ def executeBackburner(cameraName, savePath):
         # Set side camera as render cam
         cmds.setAttr('perspShape.renderable', 0)
         cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Side.renderable', 1)
-        cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Front', 0)
-        cmds.setAttr('Evelyn_FrenchSpeak_Master:Mouthbag_Camera.renderable', 0)
+        cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Front.renderable', 0)
+        cmds.setAttr('Carolina_GermanSpeak_Master:Mouthbag_Camera.renderable', 0)
     else:
         cmds.hide('Carolina_GermanSpeak_Master:Carolina_IPA:Carolina')
         cmds.showHidden('Mouthbag')
@@ -60,28 +61,33 @@ def executeBackburner(cameraName, savePath):
         # Set side camera as render cam
         cmds.setAttr('perspShape.renderable', 0)
         cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Side.renderable', 0)
-        cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Front', 0)
-        cmds.setAttr('Evelyn_FrenchSpeak_Master:Mouthbag_Camera.renderable', 1)
+        cmds.setAttr('Carolina_GermanSpeak_Master:Carolina_Front.renderable', 0)
+        cmds.setAttr('Carolina_GermanSpeak_Master:Mouthbag_Camera.renderable', 1)
 
     # Save As a new file
     filePath = cmds.file(q=True, sn=True)
     slashIndex = filePath.rfind("/")
-    # savePath = filePath[:slashIndex]
-    jobName = filePath[slashIndex + 1:].split(".")[0]
-    if jobName.count("_") is not 1: # FIXME: Do it by camera rather than the name since there are going to be a bunch of weird exceptions
+    jobName = filePath[slashIndex + 1:].split(".")[0] # Strips off the path and the .mb
+
+    if cameraName is not "FrontCam": # Strips off extra camera names from file name
         jobName = jobName[:jobName.rfind("_")]
+    print("jobName: {jobName} \n").format(jobName=jobName)
+
+    # if jobName.count("_") is not 1:
+    #     jobName = jobName[:jobName.rfind("_")]
+
     finalFileName = "{jobName}_{cameraName}.mb".format(jobName=jobName, cameraName=cameraName)
     finalSavePath = (os.path.join(savePath, finalFileName)).replace("\\", "/")
-    print("Saving file: {finalSavePath}".format(finalSavePath))
+    print("\n\nSaving file: {finalSavePath}\n".format(finalSavePath=finalSavePath))
     cmds.file(rename=finalSavePath)
     cmds.file(save=True, type="mayaBinary", f=True)
 
-    # Generate temp
+    # Generate temp file
     generateTempFile(jobName, cameraName)
 
     # Generate and execute new Backburner command
-    projectPath = r"V:/Animation/2021/BYU Online/French IPA/Projects/French_IPA_Project/Renders/MayaRenders"
-    renderPath = filePath.split("Scenes/")[1]
+    projectPath = r"V:/Animation/2021/BYU Online/GERMAN IPA/Projects/German Pronunciation/Renders/MayaRenders"
+    renderPath = baseFilePath.split("Scenes/")[1]
     slashIndex = renderPath.rfind("/")
     renderPath = renderPath[:slashIndex]
     slashIndex = filePath.rfind("/")
@@ -89,7 +95,7 @@ def executeBackburner(cameraName, savePath):
     finalRenderPath = (os.path.join(projectPath, renderPath, jobName, cameraName)).replace("\\", "/")
     print("Rendering to : {finalRenderPath}".format(finalRenderPath=finalRenderPath))
     final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 1 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 1 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{projectName}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, projectName = finalSavePath, writeDirectory = finalRenderPath)
-    print("Sending to Backburner")
+    print("\n\nSending to Backburner")
     print(final)
     printSend = mm.eval('system (' + final + ')')
     print printSend
@@ -116,6 +122,7 @@ for attr in list_Attr:
 
 # Create a new folder to put all the extra Maya files into
 filePath = cmds.file(q=True, sn=True)
+baseFilePath = filePath
 slashIndex = filePath.rfind("/")
 jobName = filePath[slashIndex + 1:].split(".")[0]
 filePath = filePath[:slashIndex]
@@ -124,9 +131,9 @@ path = (os.path.join(filePath, jobName))
 
 if not os.path.exists(path):
     os.mkdir(path, mode)
-    print("Created folder at {path}".format(path=path))
+    print("Created folder at {path}\n".format(path=path))
 else:
-    print("Folder already exists, skipped creating")
+    print("Folder already exists, skipped creating\n")
 
 #Set file output to tif
 cmds.setAttr("defaultArnoldDriver.ai_translator", "tif", type="string")
@@ -149,11 +156,14 @@ cmds.setAttr('defaultResolution.width',1920)
 cmds.setAttr('defaultResolution.height',1080)
 cmds.setAttr('defaultResolution.deviceAspectRatio',1.777)
 
-executeBackburner("FrontCam", path)
-executeBackburner("SideCam", path)
+executeBackburner("FrontCam", path, baseFilePath)
+executeBackburner("SideCam", path, baseFilePath)
 
-cmds.setAttr('Evelyn_FrenchSpeak_Master:DomeLightShape.camera', 0)
-cmds.setAttr('Evelyn_FrenchSpeak_Master:DomeLight.visibility', 0)
-executeBackburner("MouthBag", path)
+cmds.setAttr('Carolina_GermanSpeak_Master:aiSkyDomeLight1.camera', 0)
+cmds.setAttr('Carolina_GermanSpeak_Master:aiSkyDomeLight1.visibility', 0)
+executeBackburner("MouthBag", path, baseFilePath)
 
-print("Finished")
+print(baseFilePath)
+cmds.file(baseFilePath, o=True)
+
+print("Finished\n\n\n")
