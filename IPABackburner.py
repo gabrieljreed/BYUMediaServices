@@ -68,7 +68,7 @@ def executeBackburner(cameraName, savePath):
     slashIndex = filePath.rfind("/")
     # savePath = filePath[:slashIndex]
     jobName = filePath[slashIndex + 1:].split(".")[0]
-    if jobName.count("_") is not 1:
+    if jobName.count("_") is not 1: # FIXME: Do it by camera rather than the name since there are going to be a bunch of weird exceptions
         jobName = jobName[:jobName.rfind("_")]
     finalFileName = "{jobName}_{cameraName}.mb".format(jobName=jobName, cameraName=cameraName)
     finalSavePath = (os.path.join(savePath, finalFileName)).replace("\\", "/")
