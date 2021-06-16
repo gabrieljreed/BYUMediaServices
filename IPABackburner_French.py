@@ -177,7 +177,7 @@ def runner(fileName):
     executeBackburner("MouthBag", path, filePath)
 
     # Opens original file back up (for debugging purposes)
-    cmds.file(filePath, o=True)
+    # cmds.file(filePath, o=True)
 
     print("Finished\n\n\n")
 
