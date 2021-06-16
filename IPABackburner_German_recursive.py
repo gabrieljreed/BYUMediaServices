@@ -146,7 +146,7 @@ def executeBackburner(cameraName, savePath, baseFilePath):
     jobFolder = filePath[slashIndex + 1:].split(".")[0]
     finalRenderPath = (os.path.join(projectPath, renderPath, jobName, cameraName)).replace("\\", "/")
     print("Rendering to : {finalRenderPath}".format(finalRenderPath=finalRenderPath))
-    final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 50 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 1 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{finalSavePath}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, finalSavePath = finalSavePath, writeDirectory = finalRenderPath)
+    final = "\"\\\"\\\"C:/Program Files (x86)/Autodesk/Backburner/cmdjob.exe\\\" -jobName \\\"{jobName}_{cameraName}\\\" -description \\\"\\\" -manager 10.25.15.188 -port 7347 -priority 25 -taskList \\\"C:/Users/{username}/AppData/Local/Temp/{jobName}_{cameraName}.txt\\\" -taskName 2 \\\"C:/Program Files/Autodesk/Maya2020/bin/Render\\\" -r file -s %tp2 -e %tp3 -proj \\\"C:/Users/{username}/Documents/maya/projects/default\\\" -rd \\\"{writeDirectory}\\\"  \\\"{finalSavePath}\\\"\"".format(jobName = jobName, username = getpass.getuser(), cameraName = cameraName, finalSavePath = finalSavePath, writeDirectory = finalRenderPath)
     print("\n\nSending to Backburner")
     print(final)
     printSend = mm.eval('system (' + final + ')')
