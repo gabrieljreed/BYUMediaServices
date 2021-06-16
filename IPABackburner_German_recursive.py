@@ -187,5 +187,7 @@ def runner(fileName):
 
 for root, dirs, files in os.walk(r"V:/Animation/2021/BYU Online/GERMAN IPA/Projects/German Pronunciation/Maya/Scenes"):
     for currentFile in files:
-        print(currentFile)
-        runner(currentFile)
+        curr = os.path.join(root, currentFile)
+        print("Currently working on {}".format(currentFile))
+        runner(curr)
+        print("Finished working on {}".format(currentFile))

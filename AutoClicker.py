@@ -16,4 +16,4 @@ while 1:
     time.sleep(0.1)
     keyboard.release(Key.enter)
 
-    time.sleep(15)
+    time.sleep(5)
