@@ -9,7 +9,7 @@ import glob
 # Set general render settings
 def setGeneralRenderSettings():
     #Duplicate Camera
-    duplicateCam('duplicateCam('Evelyn_FrenchSpeak_Master:Side_Camera')')
+    duplicateCam('Evelyn_FrenchSpeak_Master:Side_Camera')
 
     render_default = 'defaultRenderGlobals'
     render_arnold = 'defaultArnoldDriver'
@@ -158,8 +158,8 @@ def duplicateCam(CameraName):
 
 # Main function to send all Backburner jobs for a given file
 def runner(fileName):
-    cmds.file(save=True, type="mayaBinary", f=True)
-    cmds.file(fileName, o=True)
+    # cmds.file(save=True, type="mayaBinary", f=True)
+    # cmds.file(fileName, o=True)
 
     setGeneralRenderSettings()
 
