@@ -161,8 +161,8 @@ def duplicateCam(CameraName):
 
 # Main function to send all Backburner jobs for a given file
 def runner(fileName):
-    cmds.file(save=True, type="mayaBinary", f=True)
-    cmds.file(fileName, o=True)
+    # cmds.file(save=True, type="mayaBinary", f=True)
+    # cmds.file(fileName, o=True)
 
     setGeneralRenderSettings()
 
@@ -180,7 +180,7 @@ def runner(fileName):
     executeBackburner("MouthBag", path, filePath)
 
     # Opens original file back up (for debugging purposes)
-    cmds.file(filePath, o=True)
+    # cmds.file(filePath, o=True)
 
     print("Finished\n\n\n")
 
